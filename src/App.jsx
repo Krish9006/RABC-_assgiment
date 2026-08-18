@@ -164,19 +164,29 @@ function StatCard({ label, value, sub, icon, color }) {
   );
 }
 
-function TopBar({ title, subtitle }) {
+function TopBar({ title, subtitle, onToggleMobileMenu }) {
   return (
-    <div className="bg-white border-b border-slate-100 px-8 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm">
-      <div>
-        <h2 className="text-slate-800 font-bold text-xl leading-tight">{title}</h2>
-        {subtitle && <p className="text-slate-400 text-sm mt-0.5">{subtitle}</p>}
+    <div className="bg-white border-b border-slate-100 px-4 md:px-8 py-4 flex items-center justify-between sticky top-0 z-20 shadow-sm">
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onToggleMobileMenu}
+          className="md:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors border border-slate-200 flex items-center justify-center"
+          aria-label="Toggle Navigation Menu"
+        >
+          <span className="text-xl leading-none">☰</span>
+        </button>
+        <div>
+          <h2 className="text-slate-800 font-bold text-lg md:text-xl leading-tight">{title}</h2>
+          {subtitle && <p className="text-slate-400 text-xs md:text-sm mt-0.5">{subtitle}</p>}
+        </div>
       </div>
-      <p className="text-slate-400 text-sm hidden sm:block">{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+      <p className="text-slate-400 text-sm hidden lg:block">{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
     </div>
   );
 }
 
-function Sidebar({ user, nav, onLogout }) {
+function Sidebar({ user, nav, onLogout, mobileOpen, setMobileOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
   const role = user.role;
@@ -186,41 +196,53 @@ function Sidebar({ user, nav, onLogout }) {
   const avCol = { admin: 'blue', doctor: 'emerald', patient: 'violet' }[role];
 
   return (
-    <aside className={`w-64 min-h-screen flex flex-col bg-gradient-to-b ${grad} flex-shrink-0`}>
-      <div className="px-6 py-5 border-b border-white/10 flex items-center gap-3">
-        <div className="w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center text-2xl">🏥</div>
-        <div>
-          <p className="text-white font-bold text-base leading-none">MedCare Pro</p>
-          <p className="text-white/40 text-xs mt-0.5">Healthcare Portal</p>
+    <>
+      {/* Mobile Backdrop */}
+      {mobileOpen && (
+        <div
+          onClick={() => setMobileOpen(false)}
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 md:hidden animate-fade-in"
+        />
+      )}
+      <aside className={`w-64 min-h-screen flex flex-col bg-gradient-to-b ${grad} flex-shrink-0 fixed md:static inset-y-0 left-0 z-40 transition-transform duration-300 ease-in-out ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+        <div className="px-6 py-5 border-b border-white/10 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center text-2xl">🏥</div>
+            <div>
+              <p className="text-white font-bold text-base leading-none">MedCare Pro</p>
+              <p className="text-white/40 text-xs mt-0.5">Healthcare Portal</p>
+            </div>
+          </div>
+          <button onClick={() => setMobileOpen(false)} className="text-white/60 hover:text-white md:hidden text-xl p-1">✕</button>
         </div>
-      </div>
-      <div className="px-5 py-4 border-b border-white/10 flex items-center gap-3">
-        <Av name={user.name} color={avCol} />
-        <div className="min-w-0">
-          <p className="text-white text-sm font-semibold truncate">{user.name}</p>
-          <span className={`${badge} text-white text-xs px-2 py-0.5 rounded-full mt-0.5 inline-block`}>
-            {role.charAt(0).toUpperCase() + role.slice(1)}
-          </span>
+        <div className="px-5 py-4 border-b border-white/10 flex items-center gap-3">
+          <Av name={user.name} color={avCol} />
+          <div className="min-w-0">
+            <p className="text-white text-sm font-semibold truncate">{user.name}</p>
+            <span className={`${badge} text-white text-xs px-2 py-0.5 rounded-full mt-0.5 inline-block`}>
+              {role.charAt(0).toUpperCase() + role.slice(1)}
+            </span>
+          </div>
         </div>
-      </div>
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {nav.map(item => {
-          const isActive = location.pathname === item.path;
-          return (
-            <button key={item.path} onClick={() => navigate(item.path)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 text-left
-                ${isActive ? `bg-white/15 text-white border-l-4 ${hl}` : 'text-white/55 hover:text-white hover:bg-white/10'}`}>
-              <span className="text-base w-5 text-center">{item.icon}</span>{item.label}
-            </button>
-          );
-        })}
-      </nav>
-      <div className="p-4 border-t border-white/10">
-        <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/50 hover:text-white hover:bg-white/10 text-sm font-medium transition-all">
-          <span>🚪</span>Logout
-        </button>
-      </div>
-    </aside>
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          {nav.map(item => {
+            const isActive = location.pathname === item.path;
+            return (
+              <button key={item.path} onClick={() => { navigate(item.path); setMobileOpen && setMobileOpen(false); }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 text-left
+                  ${isActive ? `bg-white/15 text-white border-l-4 ${hl}` : 'text-white/55 hover:text-white hover:bg-white/10'}`}>
+                <span className="text-base w-5 text-center">{item.icon}</span>{item.label}
+              </button>
+            );
+          })}
+        </nav>
+        <div className="p-4 border-t border-white/10">
+          <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/50 hover:text-white hover:bg-white/10 text-sm font-medium transition-all">
+            <span>🚪</span>Logout
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }
 
@@ -394,7 +416,7 @@ function AdminOverview({ doctors, appointments }) {
   const activeDocs = doctors.filter(d => d.status === 'active').length;
   const todayApts  = appointments.filter(a => a.date === today).length;
   return (
-    <div className="p-8 space-y-8 animate-fade-in">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 animate-fade-in">
       <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-5">
         <StatCard label="Total Patients"       value={30}             sub="Enrolled in system"              icon="🧑‍⚕️" color="violet" />
         <StatCard label="Registered Doctors"   value={doctors.length} sub={`${activeDocs} currently active`} icon="👨‍⚕️" color="emerald" />
@@ -459,14 +481,14 @@ function AdminDoctors({ doctors, setDoctors }) {
   const save = () => { setDoctors(p => p.map(d => d.id === editing ? { ...form } : d)); setEditing(null); };
 
   return (
-    <div className="p-8 animate-fade-in">
+    <div className="p-4 sm:p-6 lg:p-8 animate-fade-in">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
           <h3 className="text-xl font-bold text-slate-800">Manage Doctors</h3>
           <p className="text-slate-400 text-sm">{filtered.length} doctors found</p>
         </div>
         <input type="text" placeholder="🔍 Search name or specialization…" value={search} onChange={e => setSearch(e.target.value)}
-          className="px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-72" />
+          className="px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-72" />
       </div>
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-x-auto">
         <table className="w-full text-sm">
@@ -536,14 +558,14 @@ function AdminPatients({ doctors }) {
   const [search, setSearch] = useState('');
   const filtered = PATIENTS_DATA.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.email.toLowerCase().includes(search.toLowerCase()));
   return (
-    <div className="p-8 animate-fade-in">
+    <div className="p-4 sm:p-6 lg:p-8 animate-fade-in">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
           <h3 className="text-xl font-bold text-slate-800">Patient Directory</h3>
           <p className="text-slate-400 text-sm">{filtered.length} patients enrolled</p>
         </div>
         <input type="text" placeholder="🔍 Search by name or email…" value={search} onChange={e => setSearch(e.target.value)}
-          className="px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-72" />
+          className="px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-72" />
       </div>
       <PrivacyBanner text="Admin can view patient name, email, assigned doctor and status only. Personal details (DOB, blood group, phone, medical history, prescriptions) are restricted to authorized medical staff only." />
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-x-auto">
@@ -588,7 +610,7 @@ function AdminUsers({ doctors }) {
   const roleBadge = { admin: 'bg-blue-100 text-blue-700', doctor: 'bg-emerald-100 text-emerald-700', patient: 'bg-violet-100 text-violet-700' };
   const access    = { admin: 'Full System Access', doctor: 'Medical Staff (Own Patients)', patient: 'Self-Service (Own Data)' };
   return (
-    <div className="p-8 animate-fade-in">
+    <div className="p-4 sm:p-6 lg:p-8 animate-fade-in">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
           <h3 className="text-xl font-bold text-slate-800">User Management</h3>
@@ -633,6 +655,7 @@ function AdminUsers({ doctors }) {
 }
 
 function AdminLayout({ user, doctors, setDoctors, appointments, onLogout }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const nav = [
     { path: '/admin',          label: 'Overview',          icon: '📊' },
@@ -650,9 +673,9 @@ function AdminLayout({ user, doctors, setDoctors, appointments, onLogout }) {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar user={user} nav={nav} onLogout={onLogout} />
+      <Sidebar user={user} nav={nav} onLogout={onLogout} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
       <div className="flex-1 overflow-y-auto">
-        <TopBar {...titleInfo} />
+        <TopBar {...titleInfo} onToggleMobileMenu={() => setMobileOpen(p => !p)} />
         <ErrorBoundary key={location.pathname}>
           <Routes>
             <Route path="/" element={<AdminOverview doctors={doctors} appointments={appointments} />} />
@@ -676,7 +699,7 @@ function DoctorOverview({ user, appointments }) {
   const done     = mine.filter(a => a.status === 'completed');
   const myPat    = PATIENTS_DATA.filter(p => p.assignedDoctorId === user.id);
   return (
-    <div className="p-8 space-y-8 animate-fade-in">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 animate-fade-in">
       <div className="grid sm:grid-cols-3 gap-5">
         <StatCard label="My Patients"          value={myPat.length}  sub="Assigned to your care"    icon="👥" color="emerald" />
         <StatCard label="Today's Appointments" value={todayA.length} sub="Scheduled for today"      icon="📅" color="blue"    />
@@ -746,7 +769,7 @@ function DoctorPatients({ user, appointments, prescriptions, setPrescriptions })
   const patApt = id => appointments.filter(a => a.patientId === id && a.doctorId === user.id);
 
   return (
-    <div className="p-8 animate-fade-in">
+    <div className="p-4 sm:p-6 lg:p-8 animate-fade-in">
       <div className="mb-6">
         <h3 className="text-xl font-bold text-slate-800">My Patients</h3>
         <p className="text-slate-400 text-sm">{myPat.length} patients assigned — other patients' data is not accessible</p>
@@ -871,7 +894,7 @@ function DoctorPatients({ user, appointments, prescriptions, setPrescriptions })
 function DoctorAppointments({ user, appointments }) {
   const mine = appointments.filter(a => a.doctorId === user.id).sort((a, b) => a.date < b.date ? 1 : -1);
   return (
-    <div className="p-8 animate-fade-in">
+    <div className="p-4 sm:p-6 lg:p-8 animate-fade-in">
       <div className="mb-6"><h3 className="text-xl font-bold text-slate-800">My Appointments</h3><p className="text-slate-400 text-sm">{mine.length} total</p></div>
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-x-auto">
         {mine.length === 0
@@ -903,6 +926,7 @@ function DoctorAppointments({ user, appointments }) {
 }
 
 function DoctorLayout({ user, appointments, prescriptions, setPrescriptions, onLogout }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const nav = [
     { path: '/doctor',              label: 'Dashboard',    icon: '📊' },
@@ -918,9 +942,9 @@ function DoctorLayout({ user, appointments, prescriptions, setPrescriptions, onL
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar user={user} nav={nav} onLogout={onLogout} />
+      <Sidebar user={user} nav={nav} onLogout={onLogout} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
       <div className="flex-1 overflow-y-auto">
-        <TopBar {...titleInfo} />
+        <TopBar {...titleInfo} onToggleMobileMenu={() => setMobileOpen(p => !p)} />
         <ErrorBoundary key={location.pathname}>
           <Routes>
             <Route path="/" element={<DoctorOverview user={user} appointments={appointments} />} />
@@ -943,7 +967,7 @@ function PatientOverview({ user, doctors, appointments, prescriptions }) {
   const upcoming = myApt.filter(a => a.status === 'scheduled');
   const doc      = doctors.find(d => d.id === user.assignedDoctorId);
   return (
-    <div className="p-8 space-y-8 animate-fade-in">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 animate-fade-in">
       <div className="grid sm:grid-cols-3 gap-5">
         <StatCard label="Upcoming Appointments" value={upcoming.length} sub="Scheduled consultations" icon="📅" color="violet" />
         <StatCard label="Active Prescriptions"  value={myRx.length}    sub="Current medications"      icon="💊" color="emerald" />
@@ -1014,7 +1038,7 @@ function PatientBook({ user, doctors, setAppointments }) {
   };
 
   return (
-    <div className="p-8 animate-fade-in">
+    <div className="p-4 sm:p-6 lg:p-8 animate-fade-in">
       <div className="mb-6"><h3 className="text-xl font-bold text-slate-800">Book an Appointment</h3><p className="text-slate-400 text-sm">Choose a specialist and your preferred slot</p></div>
       {ok  && <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl mb-5 text-sm">{ok}</div>}
       {err && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-5 text-sm">⚠️ {err}</div>}
@@ -1082,7 +1106,7 @@ function PatientBook({ user, doctors, setAppointments }) {
 function PatientAppointments({ user, doctors, appointments }) {
   const mine = appointments.filter(a => a.patientId === user.id).sort((a, b) => a.date < b.date ? 1 : -1);
   return (
-    <div className="p-8 animate-fade-in">
+    <div className="p-4 sm:p-6 lg:p-8 animate-fade-in">
       <div className="mb-6"><h3 className="text-xl font-bold text-slate-800">My Appointments</h3><p className="text-slate-400 text-sm">{mine.length} total</p></div>
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-x-auto">
         {mine.length === 0
@@ -1117,7 +1141,7 @@ function PatientAppointments({ user, doctors, appointments }) {
 function PatientPrescriptions({ user, prescriptions }) {
   const mine = prescriptions.filter(rx => rx.patientId === user.id).sort((a, b) => a.date < b.date ? 1 : -1);
   return (
-    <div className="p-8 animate-fade-in">
+    <div className="p-4 sm:p-6 lg:p-8 animate-fade-in">
       <div className="mb-6"><h3 className="text-xl font-bold text-slate-800">My Prescriptions</h3><p className="text-slate-400 text-sm">{mine.length} on record</p></div>
       {mine.length === 0
         ? <div className="bg-white rounded-2xl border-2 border-dashed border-slate-200 p-12 text-center text-slate-400"><p className="text-4xl mb-3">💊</p><p>No prescriptions yet</p></div>
@@ -1149,6 +1173,7 @@ function PatientPrescriptions({ user, prescriptions }) {
 }
 
 function PatientLayout({ user, doctors, appointments, setAppointments, prescriptions, onLogout }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const nav = [
     { path: '/patient',              label: 'My Dashboard',     icon: '📊' },
@@ -1166,9 +1191,9 @@ function PatientLayout({ user, doctors, appointments, setAppointments, prescript
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar user={user} nav={nav} onLogout={onLogout} />
+      <Sidebar user={user} nav={nav} onLogout={onLogout} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
       <div className="flex-1 overflow-y-auto">
-        <TopBar {...titleInfo} />
+        <TopBar {...titleInfo} onToggleMobileMenu={() => setMobileOpen(p => !p)} />
         <ErrorBoundary key={location.pathname}>
           <Routes>
             <Route path="/" element={<PatientOverview user={user} doctors={doctors} appointments={appointments} prescriptions={prescriptions} />} />
